@@ -79,3 +79,5 @@ install(TARGETS waypoint_publisher waypoint_publisher_file hovering_example
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
+
+#test Tevhit Karsli
