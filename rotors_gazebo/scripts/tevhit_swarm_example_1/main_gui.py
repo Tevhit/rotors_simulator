@@ -82,7 +82,7 @@ class Main:
         # -------------------------------------------------------------------
 
         # UAV count can be parametric according to the "tevhit_swarm_example.launch" file
-        self.total_uav_count = 12   # sys.argv[1]
+        self.total_uav_count = 12  # sys.argv[1]
         self.simulation_manager = SimulationManager(int(self.total_uav_count))
 
         # Create and show main window
@@ -103,7 +103,7 @@ class Main:
             iha_name = 'firefly' + str(i)
             self.uav_list.insert(1, iha_name)
 
-        # Each uav can be armed and disarmed
+        # Each UAV can be armed and disarmed
         self.uav_arm_button = Button(self.window, text='Arm UAV', height=2, width=20,
                                      command=self.arm_auv)
         self.uav_arm_button.place(x=25, y=450)
@@ -172,31 +172,31 @@ class Main:
         self.sequential_landing_button.place(x=510, y=175)
 
     def arm_auv(self):
-        # Listbox'ta secilmis IHA'larin thread'lerini calistirir.
+        # Start the threads of the selected UAVs in the list
 
-        secili_ihalar = self.uav_list.curselection()
-        self.active_uav_count += len(secili_ihalar)
-        self.active_uav_info.set('Toplam Aktif Calisan IHA Sayisi: ' + str(self.active_uav_count))
+        selected_uav_list = self.uav_list.curselection()
+        self.active_uav_count += len(selected_uav_list)
+        self.active_uav_info.set('Total Armed UAV Count: ' + str(self.active_uav_count))
 
-        iha_isimleri = []
-        for iha in secili_ihalar:
+        name_of_uav_list = []
+        for iha in selected_uav_list:
             self.uav_list.itemconfig(iha, {'bg': 'lightgreen'})
-            iha_isimleri.append(self.uav_list.get(iha))
+            name_of_uav_list.append(self.uav_list.get(iha))
 
-        self.simulation_manager.ihaCalistir(iha_isimleri)
+        self.simulation_manager.arm_uav(name_of_uav_list)
 
         self.uav_list.selection_clear(0, 'end')
 
     def disarm_uav(self):
-        # Listbox'ta secilmis IHA'larin thread'lerini durdurur.
+        # Stop the threads of the selected UAVs in the list
 
-        secili_ihalar = self.uav_list.curselection()
-        self.active_uav_count -= len(secili_ihalar)
-        self.active_uav_info.set('Toplam Aktif Calisan IHA Sayisi: ' + str(self.active_uav_count))
+        selected_uav_list = self.uav_list.curselection()
+        self.active_uav_count -= len(selected_uav_list)
+        self.active_uav_info.set('Total Armed UAV Count: ' + str(self.active_uav_count))
 
-        for iha in secili_ihalar:
+        for iha in selected_uav_list:
             self.uav_list.itemconfig(iha, {'bg': 'white'})
-            self.simulation_manager.ihaDurdur(int(self.uav_list.get(iha).replace('firefly', '')))
+            self.simulation_manager.disarm_uav(int(self.uav_list.get(iha).replace('firefly', '')))
 
         self.uav_list.selection_clear(0, 'end')
 
@@ -204,7 +204,6 @@ class Main:
         self.set_altitude_window = Tk()
         self.set_altitude_window.title('Set Altitude')
         self.set_altitude_window.geometry('500x100')
-
         center(self.set_altitude_window)
 
         set_altitude_input_label = Label(self.set_altitude_window, text="Altitude: ")
@@ -220,15 +219,14 @@ class Main:
 
     def publish_swarm_altitude(self):
         input_altitude = int(self.set_altitude_entry.get())
-        self.simulation_manager.goreviYayinla('IrtifaBelirle', str(input_altitude))
-        self.simulation_manager.gorev_irtifa = input_altitude
+        self.simulation_manager.publish_mission('set_altitude', str(input_altitude))
+        self.simulation_manager.mission_altitude = input_altitude
         self.set_altitude_window.destroy()
 
     def square_formation(self):
         self.square_formation_window = Tk()
         self.square_formation_window.title('Square Formation')
         self.square_formation_window.geometry('500x100')
-
         center(self.square_formation_window)
 
         square_formation_input_label = Label(self.square_formation_window, text="Enter Distance Between UAVs: ")
@@ -245,14 +243,13 @@ class Main:
 
     def publish_square_formation(self):
         distance_between_uav = int(self.square_formation_entry.get())
-        self.simulation_manager.goreviYayinla('KareFormasyonunaGir', str(distance_between_uav))
+        self.simulation_manager.publish_mission("square_formation", str(distance_between_uav))
         self.square_formation_window.destroy()
 
     def triangle_formation(self):
         self.triangle_formation_window = Tk()
         self.triangle_formation_window.title('Triangle Formation')
         self.triangle_formation_window.geometry('500x100')
-
         center(self.triangle_formation_window)
 
         triangle_formation_input_label = Label(self.triangle_formation_window, text="Enter Distance Between UAVs: ")
@@ -269,14 +266,13 @@ class Main:
 
     def publish_triangle_formation(self):
         distance_between_uav = int(self.triangle_formation_entry.get())
-        self.simulation_manager.goreviYayinla('UcgenFormasyonunaGir', str(distance_between_uav))
+        self.simulation_manager.publish_mission("triangle_formation", str(distance_between_uav))
         self.triangle_formation_window.destroy()
 
     def pentagon_formation(self):
         self.pentagon_formation_window = Tk()
         self.pentagon_formation_window.title('Pentagon Formation')
         self.pentagon_formation_window.geometry('500x100')
-
         center(self.pentagon_formation_window)
 
         pentagon_formation_input_label = Label(self.pentagon_formation_window, text="Enter Distance Between UAVs: ")
@@ -293,14 +289,13 @@ class Main:
 
     def publish_pentagon_formation(self):
         distance_between_uav = int(self.pentagon_formation_entry.get())
-        self.simulation_manager.goreviYayinla('BesgenFormasyonunaGir', str(distance_between_uav))
+        self.simulation_manager.publish_mission('pentagon_formation', str(distance_between_uav))
         self.pentagon_formation_window.destroy()
 
     def v_formation(self):
         self.v_formation_window = Tk()
         self.v_formation_window.title('V Formation')
         self.v_formation_window.geometry('500x125')
-
         center(self.v_formation_window)
 
         v_formation_distance_input_label = Label(self.v_formation_window, text="Enter Distance Between UAVs: ")
@@ -323,14 +318,13 @@ class Main:
     def publish_v_formation(self):
         distance_between_uav = int(self.v_formation_distance_entry.get())
         angle_of_v = int(self.v_formation_angle_entry.get())
-        self.simulation_manager.goreviYayinla('VFormasyonunaGir', str(distance_between_uav) + ' ' + str(angle_of_v))
+        self.simulation_manager.publish_mission('v_formation', str(distance_between_uav) + ' ' + str(angle_of_v))
         self.v_formation_window.destroy()
 
     def crescent_formation(self):
         self.crescent_formation_window = Tk()
         self.crescent_formation_window.title('Crescent Formation')
         self.crescent_formation_window.geometry('500x100')
-
         center(self.crescent_formation_window)
 
         crescent_formation_input_label = Label(self.crescent_formation_window, text="Enter Radius of Crescent: ")
@@ -347,14 +341,13 @@ class Main:
 
     def publish_crescent_formation(self):
         radius = int(self.crescent_formation_entry.get())
-        self.simulation_manager.goreviYayinla('HilalFormasyonunaGir', str(radius))
+        self.simulation_manager.publish_mission('crescent_formation', str(radius))
         self.crescent_formation_window.destroy()
 
     def star_formation(self):
         self.star_formation_window = Tk()
         self.star_formation_window.title('Star Formation')
         self.star_formation_window.geometry('500x100')
-
         center(self.star_formation_window)
 
         star_formation_input_label = Label(self.star_formation_window, text="Enter Distance Between UAVs: ")
@@ -371,14 +364,13 @@ class Main:
 
     def publish_star_formation(self):
         distance_between_uav = int(self.star_formation_entry.get())
-        self.simulation_manager.goreviYayinla('YildizFormasyonunaGir', str(distance_between_uav))
+        self.simulation_manager.publish_mission('star_formation', str(distance_between_uav))
         self.star_formation_window.destroy()
 
     def circle_formation(self):
         self.circle_formation_window = Tk()
         self.circle_formation_window.title('Circle Formation')
         self.circle_formation_window.geometry('500x100')
-
         center(self.circle_formation_window)
 
         circle_formation_input_label = Label(self.circle_formation_window, text="Enter Radius of Circle: ")
@@ -395,14 +387,13 @@ class Main:
 
     def publish_circle_formation(self):
         radius = int(self.circle_formation_entry.get())
-        self.simulation_manager.goreviYayinla('CemberFormasyonunaGir', str(radius))
+        self.simulation_manager.publish_mission('circle_formation', str(radius))
         self.circle_formation_window.destroy()
 
     def saved_formation(self):
         self.saved_formation_window = Tk()
         self.saved_formation_window.title('Saved Formation')
         self.saved_formation_window.geometry('350x125')
-
         center(self.saved_formation_window)
 
         saved_formation_question_label = Label(self.saved_formation_window, text="Run Saved Formation?")
@@ -415,14 +406,13 @@ class Main:
         self.saved_formation_window.mainloop()
 
     def publish_saved_formation(self):
-        self.simulation_manager.goreviYayinla('RastgeleFormasyonaGir')
+        self.simulation_manager.publish_mission('saved_formation')
         self.saved_formation_window.destroy()
 
     def save_random_formation(self):
         self.save_random_formation_window = Tk()
         self.save_random_formation_window.title('Save Random Formation')
         self.save_random_formation_window.geometry('350x125')
-
         center(self.save_random_formation_window)
 
         save_random_formation_question_label = Label(self.save_random_formation_window,
@@ -443,7 +433,6 @@ class Main:
         self.sequential_landing_window = Tk()
         self.sequential_landing_window.title('Sequential Landing')
         self.sequential_landing_window.geometry('500x100')
-
         center(self.sequential_landing_window)
 
         sequential_landing_input_label = Label(self.sequential_landing_window, text="Enter Waiting Time(second): ")
@@ -460,14 +449,13 @@ class Main:
 
     def publish_sequential_landing(self):
         waiting_time = int(self.sequential_landing_entry.get())
-        self.simulation_manager.goreviYayinla('OtomatikSiraliInis', str(waiting_time))
+        self.simulation_manager.publish_mission('sequential_landing', str(waiting_time))
         self.sequential_landing_window.destroy()
 
     def separate_two_swarm(self):
         self.separate_two_swarm_window = Tk()
         self.separate_two_swarm_window.title('Separate two Swarm')
         self.separate_two_swarm_window.geometry('350x125')
-
         center(self.separate_two_swarm_window)
 
         separate_two_swarm_question_label = Label(self.separate_two_swarm_window, text="Separate two Swarm?")
@@ -480,14 +468,13 @@ class Main:
         self.separate_two_swarm_window.mainloop()
 
     def publish_separate_two_swarm(self):
-        self.simulation_manager.suruAyriklikYayinla('SuruAyril')
+        self.simulation_manager.suruAyriklikYayinla('separate_two_swarm')
         self.separate_two_swarm_window.destroy()
 
     def join_two_swarm(self):
         self.join_two_swarm_window = Tk()
         self.join_two_swarm_window.title('Join two Swarm')
         self.join_two_swarm_window.geometry('350x125')
-
         center(self.join_two_swarm_window)
 
         join_two_swarm_question_label = Label(self.join_two_swarm_window, text="Join two Swarm?")
@@ -500,7 +487,7 @@ class Main:
         self.join_two_swarm_window.mainloop()
 
     def publish_join_two_swarm(self):
-        self.simulation_manager.suruAyriklikYayinla('SuruBirles')
+        self.simulation_manager.suruAyriklikYayinla('join_two_swarm')
         self.join_two_swarm_window.destroy()
 
 

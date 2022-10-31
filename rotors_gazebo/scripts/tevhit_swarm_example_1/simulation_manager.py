@@ -1,52 +1,42 @@
 import rospy
 
-# from iha import IHA
-# from formasyon import Formasyon
-# from konum_eslestirme import KonumEslestirme
-# from iha_kontrol import myThreadIhaKontrol
-#
-# from geometry_msgs.msg import Twist
-# from geometry_msgs.msg import Transform
-# from trajectory_msgs.msg import MultiDOFJointTrajectory
-# from trajectory_msgs.msg import MultiDOFJointTrajectoryPoint
-#
-# from geometry_msgs.msg import Pose
-# from geometry_msgs.msg import PoseStamped
-# from geometry_msgs.msg import Pose
-# from std_msgs.msg import String
+from formation_calculator import FormationCalculator
+from konum_eslestirme import KonumEslestirme
+from iha_kontrol import UAV
+from iha import IHA
+
+from geometry_msgs.msg import Twist
+from geometry_msgs.msg import Transform
+
+from geometry_msgs.msg import Pose
+from geometry_msgs.msg import PoseStamped
+from geometry_msgs.msg import Pose
+from std_msgs.msg import String
 
 import threading
 
 
 class SimulationManager:
 
-    def __init__(self, toplam_iha_sayisi):
-        rospy.init_node('Gorev', anonymous=True)
+    def __init__(self, total_uav_count):
+        rospy.init_node('SimulationManager', anonymous=True)
 
         self.threads = []
         self.aktif_iha_idler = []
         self.tum_ihalar_konumlar = []
 
-        self.toplam_iha_sayisi = toplam_iha_sayisi
+        self.total_uav_count = total_uav_count
 
         iha_konum_dinleme = threading.Thread(target=self.tumIHAlarinKonumVerileriniDinle)
         iha_konum_dinleme.start()
 
         self.gorev_yayinlama_reset = False
 
-        self.gorev_irtifa = 0
+        self.mission_altitude = 0
 
         self.rastgele_formasyon_envanter_konumlar = []
 
-    def setToplamIhaSayisi(self, toplam_iha_sayisi):
-        self.toplam_iha_sayisi = toplam_iha_sayisi
-
-    """
-    -------------------------------------------------------------------------------------------------------
-    -------------------------------------------------------------------------------------------------------
-    BU KISIMDA IHA'LAR CALISTIRILIR/DURDURULUR, BU SAYEDE SURUYE EKLENIR/CIKARILIR
-    """
-    def ihaCalistir(self, iha_isimleri):
+    def arm_uav(self, iha_isimleri):
 
         iha_idleri = []
         for i in range(0, len(iha_isimleri)):
@@ -56,7 +46,7 @@ class SimulationManager:
 
         threads = []
         for i in range(0, len(iha_idleri)):
-            my_thread = myThreadIhaKontrol(iha_idleri[i], self.aktif_iha_idler)
+            my_thread = UAV(iha_idleri[i], self.aktif_iha_idler)
             threads.append(my_thread)
             self.threads.append(my_thread)
 
@@ -69,7 +59,7 @@ class SimulationManager:
             self.threads[i].setRastgeleFormasyonEnvanterKonumlar(self.rastgele_formasyon_envanter_konumlar)
             self.threads[i].setReferansNoktasi()
 
-    def ihaDurdur(self, iha_id):
+    def disarm_uav(self, iha_id):
 
         index = self.aktif_iha_idler.index(iha_id)
         self.threads[index].killed = True
@@ -115,7 +105,7 @@ class SimulationManager:
     BU KISIMDA BUTUN IHA'LARIN KONUMLARI ANLIK OLARAK DINLENEREK THREAD'LERE ILETILIR
     """
     def tumIHAlarinKonumVerileriniDinle(self):
-        for i in range(1, self.toplam_iha_sayisi + 1):
+        for i in range(1, self.total_uav_count + 1):
             self.listener(i)
         rospy.spin()
 
@@ -149,7 +139,7 @@ class SimulationManager:
     -------------------------------------------------------------------------------------------------------
     BU KISIMDA ARAYUZDEN ALINAN GOREVLER ROS ORTAMINA PUBLISH EDILIR
     """
-    def goreviYayinla(self, gorev_adi, gorev_parametreleri = ''):
+    def publish_mission(self, gorev_adi, gorev_parametreleri = ''):
         self.setGorevYayinlamaReset()
 
         self.pub_thread = threading.Thread(target=self.myThreadGorevPub, args=(gorev_adi,gorev_parametreleri,))
@@ -163,7 +153,7 @@ class SimulationManager:
         while (not rospy.is_shutdown()):
             if self.gorev_yayinlama_reset:
                 break
-            pub.publish(gorev_adi + ' ' + gorev_parametreleri + ' ' + str(self.gorev_irtifa))
+            pub.publish(str(gorev_adi) + ' ' + gorev_parametreleri + ' ' + str(self.mission_altitude))
             rate.sleep()
 
     def setGorevYayinlamaReset(self):
