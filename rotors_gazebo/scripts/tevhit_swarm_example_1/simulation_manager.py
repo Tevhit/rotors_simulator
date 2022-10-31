@@ -1,6 +1,5 @@
 import rospy
 
-from formation_calculator import FormationCalculator
 from konum_eslestirme import KonumEslestirme
 from iha_kontrol import UAV
 from iha import IHA

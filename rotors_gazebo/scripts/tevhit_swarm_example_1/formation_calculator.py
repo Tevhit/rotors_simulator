@@ -1,432 +1,419 @@
 import math
 from decimal import Decimal
 
+# Each target positions calculated around of the reference point,
+# the reference point is center of all UAVs.
 
-class FormationCalculator:
 
-    def getKareFormasyonHedefKonumlar(self, referans_noktasi, toplam_iha_sayisi, bireyler_arasi_mesafe):
+def square_formation_target_positions(reference_point, total_uav_count, distance_between_uav):
+    if total_uav_count <= 4:
+        position1 = [0, 0]
+        position2 = [0, 0]
+        position3 = [0, 0]
+        position4 = [0, 0]
 
-        if toplam_iha_sayisi <= 4:
+        distance_between_uav /= 2
 
-            konum1 = [0, 0]
-            konum2 = [0, 0]
-            konum3 = [0, 0]
-            konum4 = [0, 0]
+        position1[0] = reference_point[0] + distance_between_uav
+        position1[1] = reference_point[1] + distance_between_uav
 
-            bireyler_arasi_mesafe /= 2
+        position2[0] = reference_point[0] + distance_between_uav
+        position2[1] = reference_point[1] - distance_between_uav
 
-            konum1[0] = referans_noktasi[0] + bireyler_arasi_mesafe
-            konum1[1] = referans_noktasi[1] + bireyler_arasi_mesafe
+        position3[0] = reference_point[0] - distance_between_uav
+        position3[1] = reference_point[1] + distance_between_uav
 
-            konum2[0] = referans_noktasi[0] + bireyler_arasi_mesafe
-            konum2[1] = referans_noktasi[1] - bireyler_arasi_mesafe
+        position4[0] = reference_point[0] - distance_between_uav
+        position4[1] = reference_point[1] - distance_between_uav
 
-            konum3[0] = referans_noktasi[0] - bireyler_arasi_mesafe
-            konum3[1] = referans_noktasi[1] + bireyler_arasi_mesafe
+        return [position1, position2, position3, position4]
+    else:
+        total_uav_count_without_corners = total_uav_count - 4
 
-            konum4[0] = referans_noktasi[0] - bireyler_arasi_mesafe
-            konum4[1] = referans_noktasi[1] - bireyler_arasi_mesafe
-
-            konumlar = [konum1, konum2, konum3, konum4]
-
-            return konumlar
+        if total_uav_count_without_corners % 4 > 0:
+            addition = 1
         else:
+            addition = 0
 
-            koseler_disindaki_iha_sayisi = toplam_iha_sayisi - 4
+        distance_between_corners = ((int(total_uav_count_without_corners / 4) + addition) + 1) * distance_between_uav
 
-            if koseler_disindaki_iha_sayisi % 4 > 0:
-                ekleme = 1
-            else:
-                ekleme = 0
+        position1 = [0, 0]
+        position2 = [0, 0]
+        position3 = [0, 0]
+        position4 = [0, 0]
 
-            koseler_arasi_mesafe = ((int(koseler_disindaki_iha_sayisi / 4) + ekleme) + 1) * bireyler_arasi_mesafe
+        distance_between_corners /= 2
 
-            konum1 = [0, 0]
-            konum2 = [0, 0]
-            konum3 = [0, 0]
-            konum4 = [0, 0]
+        position1[0] = reference_point[0] + distance_between_corners
+        position1[1] = reference_point[1] + distance_between_corners
 
-            koseler_arasi_mesafe /= 2
+        position2[0] = reference_point[0] + distance_between_corners
+        position2[1] = reference_point[1] - distance_between_corners
 
-            konum1[0] = referans_noktasi[0] + koseler_arasi_mesafe
-            konum1[1] = referans_noktasi[1] + koseler_arasi_mesafe
+        position3[0] = reference_point[0] - distance_between_corners
+        position3[1] = reference_point[1] + distance_between_corners
 
-            konum2[0] = referans_noktasi[0] + koseler_arasi_mesafe
-            konum2[1] = referans_noktasi[1] - koseler_arasi_mesafe
+        position4[0] = reference_point[0] - distance_between_corners
+        position4[1] = reference_point[1] - distance_between_corners
 
-            konum3[0] = referans_noktasi[0] - koseler_arasi_mesafe
-            konum3[1] = referans_noktasi[1] + koseler_arasi_mesafe
+        positions = [position1, position2, position3, position4]
 
-            konum4[0] = referans_noktasi[0] - koseler_arasi_mesafe
-            konum4[1] = referans_noktasi[1] - koseler_arasi_mesafe
+        total_uav_count_over_edge_1 = 0
+        total_uav_count_over_edge_2 = 0
+        total_uav_count_over_edge_3 = 0
+        total_uav_count_over_edge_4 = 0
 
-            konumlar = [konum1, konum2, konum3, konum4]
-
-            kenar1_iha_sayisi = 0
-            kenar2_iha_sayisi = 0
-            kenar3_iha_sayisi = 0
-            kenar4_iha_sayisi = 0
-
-            i = koseler_disindaki_iha_sayisi
-            while i > 0:
-                kenar1_iha_sayisi += 1
-                i -= 1
-                if i == 0:
-                    break
-
-                kenar2_iha_sayisi += 1
-                i -= 1
-                if i == 0:
-                    break
-
-                kenar3_iha_sayisi += 1
-                i -= 1
-                if i == 0:
-                    break
-
-                kenar4_iha_sayisi += 1
-                i -= 1
-                if i == 0:
-                    break
-
-            for i in range(kenar1_iha_sayisi):
-                konum = [0, 0]
-                konum[0] = konum1[0]
-                konum[1] = konum1[1] - bireyler_arasi_mesafe * (i + 1)
-                konumlar.append(konum)
-
-            for i in range(kenar2_iha_sayisi):
-                konum = [0, 0]
-                konum[0] = konum2[0] - bireyler_arasi_mesafe * (i + 1)
-                konum[1] = konum2[1]
-                konumlar.append(konum)
-
-            for i in range(kenar3_iha_sayisi):
-                konum = [0, 0]
-                konum[0] = konum3[0] + bireyler_arasi_mesafe * (i + 1)
-                konum[1] = konum3[1]
-                konumlar.append(konum)
-
-            for i in range(kenar4_iha_sayisi):
-                konum = [0, 0]
-                konum[0] = konum4[0]
-                konum[1] = konum4[1] + bireyler_arasi_mesafe * (i + 1)
-                konumlar.append(konum)
-
-            return konumlar
-
-    def getUcgenFormasyonHedefKonumlar(self, referans_noktasi, toplam_iha_sayisi, bireyler_arasi_mesafe, aci1=0, aci2=0,
-                                       aci3=0):
-
-        if toplam_iha_sayisi <= 3:
-
-            konum2 = [0, 0]
-            konum3 = [0, 0]
-
-            konum1 = [referans_noktasi[0], referans_noktasi[1] + (bireyler_arasi_mesafe / 2)]
-
-            konum2[0] = konum1[0] + math.sin(math.radians(30)) * bireyler_arasi_mesafe
-            konum2[1] = konum1[1] - math.cos(math.radians(30)) * bireyler_arasi_mesafe
-
-            konum3[0] = konum1[0] + math.sin(math.radians(-30)) * bireyler_arasi_mesafe
-            konum3[1] = konum1[1] - math.cos(math.radians(-30)) * bireyler_arasi_mesafe
-
-            konumlar = [konum1, konum2, konum3]
-
-            return konumlar
-        else:
-
-            koseler_disindaki_iha_sayisi = toplam_iha_sayisi - 3
-
-            if koseler_disindaki_iha_sayisi % 3 > 0:
-                ekleme = 1
-            else:
-                ekleme = 0
-
-            koseler_arasi_mesafe = ((int(koseler_disindaki_iha_sayisi / 3) + ekleme) + 1) * bireyler_arasi_mesafe
-
-            konum2 = [0, 0]
-            konum3 = [0, 0]
-
-            konum1 = [referans_noktasi[0], referans_noktasi[1] + (koseler_arasi_mesafe / 2)]
-
-            konum2[0] = konum1[0] + math.sin(math.radians(30)) * koseler_arasi_mesafe
-            konum2[1] = konum1[1] - math.cos(math.radians(30)) * koseler_arasi_mesafe
-
-            konum3[0] = konum1[0] + math.sin(math.radians(-30)) * koseler_arasi_mesafe
-            konum3[1] = konum1[1] - math.cos(math.radians(-30)) * koseler_arasi_mesafe
-
-            konumlar = [konum1, konum2, konum3]
-
-            kenar1_iha_sayisi = 0
-            kenar2_iha_sayisi = 0
-            kenar3_iha_sayisi = 0
-
-            i = koseler_disindaki_iha_sayisi
-            while i > 0:
-                kenar1_iha_sayisi += 1
-                i -= 1
-                if i == 0:
-                    break
-
-                kenar2_iha_sayisi += 1
-                i -= 1
-                if i == 0:
-                    break
-
-                kenar3_iha_sayisi += 1
-                i -= 1
-                if i == 0:
-                    break
-
-            for i in range(kenar1_iha_sayisi):
-                konum = [0, 0]
-                konum[0] = konum1[0] + math.sin(math.radians(30)) * bireyler_arasi_mesafe * (i + 1)
-                konum[1] = konum1[1] - math.cos(math.radians(30)) * bireyler_arasi_mesafe * (i + 1)
-                konumlar.append(konum)
-
-            for i in range(kenar2_iha_sayisi):
-                konum = [0, 0]
-                konum[0] = konum1[0] + math.sin(math.radians(-30)) * bireyler_arasi_mesafe * (i + 1)
-                konum[1] = konum1[1] - math.cos(math.radians(-30)) * bireyler_arasi_mesafe * (i + 1)
-                konumlar.append(konum)
-
-            for i in range(kenar3_iha_sayisi):
-                konum = [0, 0]
-                konum[0] = konum3[0] + bireyler_arasi_mesafe * (i + 1)
-                konum[1] = konum3[1]
-                konumlar.append(konum)
-
-            return konumlar
-
-    def getBesgenFormasyonHedefKonumlar(self, referans_noktasi, toplam_iha_sayisi, bireyler_arasi_mesafe):
-
-        if toplam_iha_sayisi <= 5:
-
-            konum2 = [0, 0]
-            konum3 = [0, 0]
-            konum4 = [0, 0]
-            konum5 = [0, 0]
-
-            konum1 = [referans_noktasi[0], referans_noktasi[1] + bireyler_arasi_mesafe]
-
-            konum2[0] = konum1[0] + math.sin(math.radians(54)) * bireyler_arasi_mesafe
-            konum2[1] = konum1[1] - math.cos(math.radians(54)) * bireyler_arasi_mesafe
-
-            konum3[0] = konum1[0] + math.sin(math.radians(-54)) * bireyler_arasi_mesafe
-            konum3[1] = konum1[1] - math.cos(math.radians(-54)) * bireyler_arasi_mesafe
-
-            konum4[0] = konum2[0] + math.sin(math.radians(-18)) * bireyler_arasi_mesafe
-            konum4[1] = konum2[1] - math.cos(math.radians(-18)) * bireyler_arasi_mesafe
-
-            konum5[0] = konum3[0] + math.sin(math.radians(18)) * bireyler_arasi_mesafe
-            konum5[1] = konum3[1] - math.cos(math.radians(18)) * bireyler_arasi_mesafe
-
-            konumlar = [konum1, konum2, konum3, konum4, konum5]
-
-            return konumlar
-        else:
-
-            koseler_disindaki_iha_sayisi = toplam_iha_sayisi - 5
-
-            if koseler_disindaki_iha_sayisi % 5 > 0:
-                ekleme = 1
-            else:
-                ekleme = 0
-
-            koseler_arasi_mesafe = ((int(koseler_disindaki_iha_sayisi / 5) + ekleme) + 1) * bireyler_arasi_mesafe
-
-            konum2 = [0, 0]
-            konum3 = [0, 0]
-            konum4 = [0, 0]
-            konum5 = [0, 0]
-
-            konum1 = [referans_noktasi[0], referans_noktasi[1] + koseler_arasi_mesafe]
-
-            konum2[0] = konum1[0] + math.sin(math.radians(54)) * koseler_arasi_mesafe
-            konum2[1] = konum1[1] - math.cos(math.radians(54)) * koseler_arasi_mesafe
-
-            konum3[0] = konum1[0] + math.sin(math.radians(-54)) * koseler_arasi_mesafe
-            konum3[1] = konum1[1] - math.cos(math.radians(-54)) * koseler_arasi_mesafe
-
-            konum4[0] = konum2[0] + math.sin(math.radians(-18)) * koseler_arasi_mesafe
-            konum4[1] = konum2[1] - math.cos(math.radians(-18)) * koseler_arasi_mesafe
-
-            konum5[0] = konum3[0] + math.sin(math.radians(18)) * koseler_arasi_mesafe
-            konum5[1] = konum3[1] - math.cos(math.radians(18)) * koseler_arasi_mesafe
-
-            konumlar = [konum1, konum2, konum3, konum4, konum5]
-
-            kenar1_iha_sayisi = 0
-            kenar2_iha_sayisi = 0
-            kenar3_iha_sayisi = 0
-            kenar4_iha_sayisi = 0
-            kenar5_iha_sayisi = 0
-
-            i = koseler_disindaki_iha_sayisi
-            while i > 0:
-                kenar1_iha_sayisi += 1
-                i -= 1
-                if i == 0:
-                    break
-
-                kenar2_iha_sayisi += 1
-                i -= 1
-                if i == 0:
-                    break
-
-                kenar3_iha_sayisi += 1
-                i -= 1
-                if i == 0:
-                    break
-
-                kenar4_iha_sayisi += 1
-                i -= 1
-                if i == 0:
-                    break
-
-                kenar5_iha_sayisi += 1
-                i -= 1
-                if i == 0:
-                    break
-
-            for i in range(kenar1_iha_sayisi):
-                konum = [0, 0]
-                konum[0] = konum1[0] + math.sin(math.radians(54)) * bireyler_arasi_mesafe * (i + 1)
-                konum[1] = konum1[1] - math.cos(math.radians(54)) * bireyler_arasi_mesafe * (i + 1)
-                konumlar.append(konum)
-
-            for i in range(kenar2_iha_sayisi):
-                konum = [0, 0]
-                konum[0] = konum1[0] + math.sin(math.radians(-54)) * bireyler_arasi_mesafe * (i + 1)
-                konum[1] = konum1[1] - math.cos(math.radians(-54)) * bireyler_arasi_mesafe * (i + 1)
-                konumlar.append(konum)
-
-            for i in range(kenar3_iha_sayisi):
-                konum = [0, 0]
-                konum[0] = konum2[0] + math.sin(math.radians(-18)) * bireyler_arasi_mesafe * (i + 1)
-                konum[1] = konum2[1] - math.cos(math.radians(-18)) * bireyler_arasi_mesafe * (i + 1)
-                konumlar.append(konum)
-
-            for i in range(kenar4_iha_sayisi):
-                konum = [0, 0]
-                konum[0] = konum3[0] + math.sin(math.radians(18)) * bireyler_arasi_mesafe * (i + 1)
-                konum[1] = konum3[1] - math.cos(math.radians(18)) * bireyler_arasi_mesafe * (i + 1)
-                konumlar.append(konum)
-
-            for i in range(kenar5_iha_sayisi):
-                konum = [0, 0]
-                konum[0] = konum4[0] - (bireyler_arasi_mesafe * (i + 1))
-                konum[1] = konum4[1]
-                konumlar.append(konum)
-
-            return konumlar
-
-    def getV_FormasyonHedefKonumlar(self, referans_noktasi, toplam_iha_sayisi, bireyler_arasi_mesafe, aci):
-
-        konumlar = []
-
-        koseler_arasi_iha_sayisi = int((toplam_iha_sayisi) / 2)
-
-        konum1 = [referans_noktasi[0], referans_noktasi[1] - (int(toplam_iha_sayisi / 4) * bireyler_arasi_mesafe)]
-        konumlar.append(konum1)
-
-        for i in range(1, koseler_arasi_iha_sayisi + 1):
-            konum = [0, 0]
-            konum[0] = konum1[0] + math.sin(math.radians(180 + (aci / 2 * 1))) * bireyler_arasi_mesafe * i
-            konum[1] = konum1[1] - math.cos(math.radians(180 + (aci / 2 * 1))) * bireyler_arasi_mesafe * i
-            konumlar.append(konum)
-
-            if len(konumlar) == toplam_iha_sayisi:
+        i = total_uav_count_without_corners
+        while i > 0:
+            total_uav_count_over_edge_1 += 1
+            i -= 1
+            if i == 0:
                 break
 
-            konum = [0, 0]
-            konum[0] = konum1[0] + math.sin(math.radians(180 + (aci / 2 * -1))) * bireyler_arasi_mesafe * i
-            konum[1] = konum1[1] - math.cos(math.radians(180 + (aci / 2 * -1))) * bireyler_arasi_mesafe * i
-            konumlar.append(konum)
+            total_uav_count_over_edge_2 += 1
+            i -= 1
+            if i == 0:
+                break
 
-        return konumlar
+            total_uav_count_over_edge_3 += 1
+            i -= 1
+            if i == 0:
+                break
 
-    def getCemberFormasyonHedefKonumlar(self, referans_noktasi, toplam_iha_sayisi, yaricap):
+            total_uav_count_over_edge_4 += 1
+            i -= 1
+            if i == 0:
+                break
 
-        bireyler_arasi_aci = int(360 / toplam_iha_sayisi)
-        konumlar = []
-        aci = 0
-        for i in range(0, toplam_iha_sayisi):
-            aci = aci + bireyler_arasi_aci
-            konum = [0, 0]
-            konum[0] = referans_noktasi[0] + math.sin(math.radians(aci)) * yaricap
-            konum[1] = referans_noktasi[1] - math.cos(math.radians(aci)) * yaricap
+        for i in range(total_uav_count_over_edge_1):
+            temp_position = [0, 0]
+            temp_position[0] = position1[0]
+            temp_position[1] = position1[1] - distance_between_uav * (i + 1)
+            positions.append(temp_position)
 
-            if 0.01 > konum[0] > -0.01:
-                konum[0] = 0
-            if 0.01 > konum[1] > -0.01:
-                konum[1] = 0
+        for i in range(total_uav_count_over_edge_2):
+            temp_position = [0, 0]
+            temp_position[0] = position2[0] - distance_between_uav * (i + 1)
+            temp_position[1] = position2[1]
+            positions.append(temp_position)
 
-            konumlar.append(konum)
+        for i in range(total_uav_count_over_edge_3):
+            temp_position = [0, 0]
+            temp_position[0] = position3[0] + distance_between_uav * (i + 1)
+            temp_position[1] = position3[1]
+            positions.append(temp_position)
 
-        return konumlar
+        for i in range(total_uav_count_over_edge_4):
+            temp_position = [0, 0]
+            temp_position[0] = position4[0]
+            temp_position[1] = position4[1] + distance_between_uav * (i + 1)
+            positions.append(temp_position)
 
-    def getHilalFormasyonHedefKonumlar(self, referans_noktasi, toplam_iha_sayisi, yaricap):
+        return positions
 
-        bireyler_arasi_aci = int(300 / toplam_iha_sayisi)
-        konumlar = []
-        aci = 0
-        for i in range(0, toplam_iha_sayisi):
-            aci = aci + bireyler_arasi_aci
-            konum = [0, 0]
-            konum[0] = referans_noktasi[0] + math.sin(math.radians(aci)) * yaricap
-            konum[1] = referans_noktasi[1] - math.cos(math.radians(aci)) * yaricap
 
-            if 0.01 > konum[0] > -0.01:
-                konum[0] = 0
-            if 0.01 > konum[1] > -0.01:
-                konum[1] = 0
+def triangle_formation_target_positions(reference_point, total_uav_count, distance_between_uav):
+    if total_uav_count <= 3:
+        position2 = [0, 0]
+        position3 = [0, 0]
 
-            konumlar.append(konum)
+        position1 = [reference_point[0], reference_point[1] + (distance_between_uav / 2)]
 
-        return konumlar
+        position2[0] = position1[0] + math.sin(math.radians(30)) * distance_between_uav
+        position2[1] = position1[1] - math.cos(math.radians(30)) * distance_between_uav
 
-    def getYildizFormasyonHedefKonumlar(self, referans_noktasi, toplam_iha_sayisi, bireyler_arasi_mesafe):
+        position3[0] = position1[0] + math.sin(math.radians(-30)) * distance_between_uav
+        position3[1] = position1[1] - math.cos(math.radians(-30)) * distance_between_uav
 
-        konumlar = []
+        return [position1, position2, position3]
+    else:
+        total_uav_count_without_corners = total_uav_count - 3
 
-        koseler_arasi_iha_sayisi = int(toplam_iha_sayisi / 3)
+        if total_uav_count_without_corners % 3 > 0:
+            addition = 1
+        else:
+            addition = 0
 
-        konum1 = [referans_noktasi[0], (referans_noktasi[1] + (bireyler_arasi_mesafe))]
-        konumlar.append(konum1)
+        distance_between_corners = ((int(total_uav_count_without_corners / 3) + addition) + 1) * distance_between_uav
 
-        for i in range(1, koseler_arasi_iha_sayisi):
-            konum = [0, 0]
-            konum[0] = konum1[0] + math.sin(math.radians(18)) * bireyler_arasi_mesafe * i
-            konum[1] = konum1[1] - math.cos(math.radians(18)) * bireyler_arasi_mesafe * i
-            konumlar.append(konum)
+        position2 = [0, 0]
+        position3 = [0, 0]
 
-            konum = [0, 0]
-            konum[0] = konum1[0] + math.sin(math.radians(-18)) * bireyler_arasi_mesafe * i
-            konum[1] = konum1[1] - math.cos(math.radians(-18)) * bireyler_arasi_mesafe * i
-            konumlar.append(konum)
+        position1 = [reference_point[0], reference_point[1] + (distance_between_corners / 2)]
 
-        ref1 = konumlar[len(konumlar) - 1]
-        ref2 = konumlar[len(konumlar) - 2]
+        position2[0] = position1[0] + math.sin(math.radians(30)) * distance_between_corners
+        position2[1] = position1[1] - math.cos(math.radians(30)) * distance_between_corners
 
-        for i in range(1, koseler_arasi_iha_sayisi):
-            konum = [0, 0]
-            konum[0] = ref1[0] + math.sin(math.radians(126)) * bireyler_arasi_mesafe * i
-            konum[1] = ref1[1] - math.cos(math.radians(126)) * bireyler_arasi_mesafe * i
-            konumlar.append(konum)
+        position3[0] = position1[0] + math.sin(math.radians(-30)) * distance_between_corners
+        position3[1] = position1[1] - math.cos(math.radians(-30)) * distance_between_corners
 
-            konum = [0, 0]
-            konum[0] = ref2[0] + math.sin(math.radians(-126)) * bireyler_arasi_mesafe * i
-            konum[1] = ref2[1] - math.cos(math.radians(-126)) * bireyler_arasi_mesafe * i
-            konumlar.append(konum)
+        positions = [position1, position2, position3]
 
-        ref3 = konumlar[len(konumlar) - 1]
-        for i in range(1, koseler_arasi_iha_sayisi):
-            konum = [0, 0]
-            konum[0] = ref3[0] + math.sin(math.radians(90)) * bireyler_arasi_mesafe * i
-            konum[1] = ref3[1] - math.cos(math.radians(90)) * bireyler_arasi_mesafe * i
-            konumlar.append(konum)
+        total_uav_count_over_edge_1 = 0
+        total_uav_count_over_edge_2 = 0
+        total_uav_count_over_edge_3 = 0
 
-        konumlar.pop(len(konumlar) - 1)
-        return konumlar
+        i = total_uav_count_without_corners
+        while i > 0:
+            total_uav_count_over_edge_1 += 1
+            i -= 1
+            if i == 0:
+                break
+
+            total_uav_count_over_edge_2 += 1
+            i -= 1
+            if i == 0:
+                break
+
+            total_uav_count_over_edge_3 += 1
+            i -= 1
+            if i == 0:
+                break
+
+        for i in range(total_uav_count_over_edge_1):
+            temp_position = [0, 0]
+            temp_position[0] = position1[0] + math.sin(math.radians(30)) * distance_between_uav * (i + 1)
+            temp_position[1] = position1[1] - math.cos(math.radians(30)) * distance_between_uav * (i + 1)
+            positions.append(temp_position)
+
+        for i in range(total_uav_count_over_edge_2):
+            temp_position = [0, 0]
+            temp_position[0] = position1[0] + math.sin(math.radians(-30)) * distance_between_uav * (i + 1)
+            temp_position[1] = position1[1] - math.cos(math.radians(-30)) * distance_between_uav * (i + 1)
+            positions.append(temp_position)
+
+        for i in range(total_uav_count_over_edge_3):
+            temp_position = [0, 0]
+            temp_position[0] = position3[0] + distance_between_uav * (i + 1)
+            temp_position[1] = position3[1]
+            positions.append(temp_position)
+
+        return positions
+
+
+def pentagon_formation_target_positions(reference_point, total_uav_count, distance_between_uav):
+    if total_uav_count <= 5:
+        position2 = [0, 0]
+        position3 = [0, 0]
+        position4 = [0, 0]
+        position5 = [0, 0]
+
+        position1 = [reference_point[0], reference_point[1] + distance_between_uav]
+
+        position2[0] = position1[0] + math.sin(math.radians(54)) * distance_between_uav
+        position2[1] = position1[1] - math.cos(math.radians(54)) * distance_between_uav
+
+        position3[0] = position1[0] + math.sin(math.radians(-54)) * distance_between_uav
+        position3[1] = position1[1] - math.cos(math.radians(-54)) * distance_between_uav
+
+        position4[0] = position2[0] + math.sin(math.radians(-18)) * distance_between_uav
+        position4[1] = position2[1] - math.cos(math.radians(-18)) * distance_between_uav
+
+        position5[0] = position3[0] + math.sin(math.radians(18)) * distance_between_uav
+        position5[1] = position3[1] - math.cos(math.radians(18)) * distance_between_uav
+
+        return [position1, position2, position3, position4, position5]
+    else:
+        total_uav_count_without_corners = total_uav_count - 5
+
+        if total_uav_count_without_corners % 5 > 0:
+            addition = 1
+        else:
+            addition = 0
+
+        distance_between_corners = ((int(total_uav_count_without_corners / 5) + addition) + 1) * distance_between_uav
+
+        position2 = [0, 0]
+        position3 = [0, 0]
+        position4 = [0, 0]
+        position5 = [0, 0]
+
+        position1 = [reference_point[0], reference_point[1] + distance_between_corners]
+
+        position2[0] = position1[0] + math.sin(math.radians(54)) * distance_between_corners
+        position2[1] = position1[1] - math.cos(math.radians(54)) * distance_between_corners
+
+        position3[0] = position1[0] + math.sin(math.radians(-54)) * distance_between_corners
+        position3[1] = position1[1] - math.cos(math.radians(-54)) * distance_between_corners
+
+        position4[0] = position2[0] + math.sin(math.radians(-18)) * distance_between_corners
+        position4[1] = position2[1] - math.cos(math.radians(-18)) * distance_between_corners
+
+        position5[0] = position3[0] + math.sin(math.radians(18)) * distance_between_corners
+        position5[1] = position3[1] - math.cos(math.radians(18)) * distance_between_corners
+
+        positions = [position1, position2, position3, position4, position5]
+
+        total_uav_count_over_edge_1 = 0
+        total_uav_count_over_edge_2 = 0
+        total_uav_count_over_edge_3 = 0
+        total_uav_count_over_edge_4 = 0
+        total_uav_count_over_edge_5 = 0
+
+        i = total_uav_count_without_corners
+        while i > 0:
+            total_uav_count_over_edge_1 += 1
+            i -= 1
+            if i == 0:
+                break
+
+            total_uav_count_over_edge_2 += 1
+            i -= 1
+            if i == 0:
+                break
+
+            total_uav_count_over_edge_3 += 1
+            i -= 1
+            if i == 0:
+                break
+
+            total_uav_count_over_edge_4 += 1
+            i -= 1
+            if i == 0:
+                break
+
+            total_uav_count_over_edge_5 += 1
+            i -= 1
+            if i == 0:
+                break
+
+        for i in range(total_uav_count_over_edge_1):
+            temp_position = [0, 0]
+            temp_position[0] = position1[0] + math.sin(math.radians(54)) * distance_between_uav * (i + 1)
+            temp_position[1] = position1[1] - math.cos(math.radians(54)) * distance_between_uav * (i + 1)
+            positions.append(temp_position)
+
+        for i in range(total_uav_count_over_edge_2):
+            temp_position = [0, 0]
+            temp_position[0] = position1[0] + math.sin(math.radians(-54)) * distance_between_uav * (i + 1)
+            temp_position[1] = position1[1] - math.cos(math.radians(-54)) * distance_between_uav * (i + 1)
+            positions.append(temp_position)
+
+        for i in range(total_uav_count_over_edge_3):
+            temp_position = [0, 0]
+            temp_position[0] = position2[0] + math.sin(math.radians(-18)) * distance_between_uav * (i + 1)
+            temp_position[1] = position2[1] - math.cos(math.radians(-18)) * distance_between_uav * (i + 1)
+            positions.append(temp_position)
+
+        for i in range(total_uav_count_over_edge_4):
+            temp_position = [0, 0]
+            temp_position[0] = position3[0] + math.sin(math.radians(18)) * distance_between_uav * (i + 1)
+            temp_position[1] = position3[1] - math.cos(math.radians(18)) * distance_between_uav * (i + 1)
+            positions.append(temp_position)
+
+        for i in range(total_uav_count_over_edge_5):
+            temp_position = [0, 0]
+            temp_position[0] = position4[0] - (distance_between_uav * (i + 1))
+            temp_position[1] = position4[1]
+            positions.append(temp_position)
+
+        return positions
+
+
+def v_formation_target_positions(reference_point, total_uav_count, distance_between_uav, angle):
+    positions = []
+
+    uav_count_between_corners = int(total_uav_count / 2)
+
+    position1 = [reference_point[0], reference_point[1] - (int(total_uav_count / 4) * distance_between_uav)]
+    positions.append(position1)
+
+    for i in range(1, uav_count_between_corners + 1):
+        temp_position = [0, 0]
+        temp_position[0] = position1[0] + math.sin(math.radians(180 + (angle / 2 * 1))) * distance_between_uav * i
+        temp_position[1] = position1[1] - math.cos(math.radians(180 + (angle / 2 * 1))) * distance_between_uav * i
+        positions.append(temp_position)
+
+        if len(positions) == total_uav_count:
+            break
+
+        temp_position = [0, 0]
+        temp_position[0] = position1[0] + math.sin(math.radians(180 + (angle / 2 * -1))) * distance_between_uav * i
+        temp_position[1] = position1[1] - math.cos(math.radians(180 + (angle / 2 * -1))) * distance_between_uav * i
+        positions.append(temp_position)
+
+    return positions
+
+
+def crescent_formation_target_positions(reference_point, total_uav_count, radius):
+    angle_between_uav = int(300 / total_uav_count)
+    positions = []
+    temp_angle = 0
+    for i in range(0, total_uav_count):
+        temp_angle = temp_angle + angle_between_uav
+        temp_position = [0, 0]
+        temp_position[0] = reference_point[0] + math.sin(math.radians(temp_angle)) * radius
+        temp_position[1] = reference_point[1] - math.cos(math.radians(temp_angle)) * radius
+
+        if 0.01 > temp_position[0] > -0.01:
+            temp_position[0] = 0
+        if 0.01 > temp_position[1] > -0.01:
+            temp_position[1] = 0
+
+        positions.append(temp_position)
+
+    return positions
+
+
+def circle_formation_target_positions(reference_point, total_uav_count, radius):
+    angle_between_uav = int(360 / total_uav_count)
+    positions = []
+    temp_angle = 0
+    for i in range(0, total_uav_count):
+        temp_angle = temp_angle + angle_between_uav
+        temp_position = [0, 0]
+        temp_position[0] = reference_point[0] + math.sin(math.radians(temp_angle)) * radius
+        temp_position[1] = reference_point[1] - math.cos(math.radians(temp_angle)) * radius
+
+        if 0.01 > temp_position[0] > -0.01:
+            temp_position[0] = 0
+        if 0.01 > temp_position[1] > -0.01:
+            temp_position[1] = 0
+
+        positions.append(temp_position)
+
+    return positions
+
+
+def star_formation_target_positions(reference_point, total_uav_count, distance_between_uav):
+    positions = []
+
+    uav_count_between_corners = int(total_uav_count / 3)
+
+    position1 = [reference_point[0], (reference_point[1] + distance_between_uav)]
+    positions.append(position1)
+
+    for i in range(1, uav_count_between_corners):
+        temp_position = [0, 0]
+        temp_position[0] = position1[0] + math.sin(math.radians(18)) * distance_between_uav * i
+        temp_position[1] = position1[1] - math.cos(math.radians(18)) * distance_between_uav * i
+        positions.append(temp_position)
+
+        temp_position = [0, 0]
+        temp_position[0] = position1[0] + math.sin(math.radians(-18)) * distance_between_uav * i
+        temp_position[1] = position1[1] - math.cos(math.radians(-18)) * distance_between_uav * i
+        positions.append(temp_position)
+
+    ref1 = positions[len(positions) - 1]
+    ref2 = positions[len(positions) - 2]
+
+    for i in range(1, uav_count_between_corners):
+        temp_position = [0, 0]
+        temp_position[0] = ref1[0] + math.sin(math.radians(126)) * distance_between_uav * i
+        temp_position[1] = ref1[1] - math.cos(math.radians(126)) * distance_between_uav * i
+        positions.append(temp_position)
+
+        temp_position = [0, 0]
+        temp_position[0] = ref2[0] + math.sin(math.radians(-126)) * distance_between_uav * i
+        temp_position[1] = ref2[1] - math.cos(math.radians(-126)) * distance_between_uav * i
+        positions.append(temp_position)
+
+    ref3 = positions[len(positions) - 1]
+    for i in range(1, uav_count_between_corners):
+        temp_position = [0, 0]
+        temp_position[0] = ref3[0] + math.sin(math.radians(90)) * distance_between_uav * i
+        temp_position[1] = ref3[1] - math.cos(math.radians(90)) * distance_between_uav * i
+        positions.append(temp_position)
+
+    positions.pop(len(positions) - 1)
+    return positions

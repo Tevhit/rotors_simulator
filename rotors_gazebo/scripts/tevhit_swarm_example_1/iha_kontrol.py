@@ -8,7 +8,8 @@ import sys
 
 from std_msgs.msg import String
 
-from formation_calculator import FormationCalculator
+import formation_calculator
+
 from konum_eslestirme import KonumEslestirme
 
 from geometry_msgs.msg import PoseStamped
@@ -37,7 +38,6 @@ class UAV(threading.Thread):
 
         self.ayriklikVerileriniGuncelle()
 
-        self.formasyon = FormationCalculator()
         self.konum_eslestirme = KonumEslestirme()
 
         self.rastgele_formasyon_envanter_konumlar = []
@@ -224,11 +224,11 @@ class UAV(threading.Thread):
         if self.gorev[0] == 'square_formation':
             if self.suru_ayriklik:
                 self.referans_noktasi = self.referans_noktasi_ayriklik
-                formasyon_hedef_koordinatlar = self.formasyon.getKareFormasyonHedefKonumlar(self.referans_noktasi,
+                formasyon_hedef_koordinatlar = formation_calculator.square_formation_target_positions(self.referans_noktasi,
                                                                                             len(self.ayrik_aktif_iha_idler),
                                                                                             int(self.gorev[1]))
             else:
-                formasyon_hedef_koordinatlar = self.formasyon.getKareFormasyonHedefKonumlar(self.referans_noktasi,
+                formasyon_hedef_koordinatlar = formation_calculator.square_formation_target_positions(self.referans_noktasi,
                                                                                             len(self.aktif_iha_idler),
                                                                                             int(self.gorev[1]))
             # self.guncelleMyPose()
@@ -240,65 +240,65 @@ class UAV(threading.Thread):
         elif self.gorev[0] == 'triangle_formation':
             if self.suru_ayriklik:
                 self.referans_noktasi = self.referans_noktasi_ayriklik
-                formasyon_hedef_koordinatlar = self.formasyon.getUcgenFormasyonHedefKonumlar(self.referans_noktasi,
+                formasyon_hedef_koordinatlar = formation_calculator.triangle_formation_target_positions(self.referans_noktasi,
                                                                                              len(self.ayrik_aktif_iha_idler),
                                                                                              int(self.gorev[1]))
             else:
-                formasyon_hedef_koordinatlar = self.formasyon.getUcgenFormasyonHedefKonumlar(self.referans_noktasi,
+                formasyon_hedef_koordinatlar = formation_calculator.triangle_formation_target_positions(self.referans_noktasi,
                                                                                              len(self.aktif_iha_idler),
                                                                                              int(self.gorev[1]))
         elif self.gorev[0] == 'pentagon_formation':
             if self.suru_ayriklik:
                 self.referans_noktasi = self.referans_noktasi_ayriklik
-                formasyon_hedef_koordinatlar = self.formasyon.getBesgenFormasyonHedefKonumlar(self.referans_noktasi,
+                formasyon_hedef_koordinatlar = formation_calculator.pentagon_formation_target_positions(self.referans_noktasi,
                                                                                               len(self.ayrik_aktif_iha_idler),
                                                                                               int(self.gorev[1]))
             else:
-                formasyon_hedef_koordinatlar = self.formasyon.getBesgenFormasyonHedefKonumlar(self.referans_noktasi,
+                formasyon_hedef_koordinatlar = formation_calculator.pentagon_formation_target_positions(self.referans_noktasi,
                                                                                               len(self.aktif_iha_idler),
                                                                                               int(self.gorev[1]))
         elif self.gorev[0] == 'v_formation':
             if self.suru_ayriklik:
                 self.referans_noktasi = self.referans_noktasi_ayriklik
-                formasyon_hedef_koordinatlar = self.formasyon.getV_FormasyonHedefKonumlar(self.referans_noktasi,
+                formasyon_hedef_koordinatlar = formation_calculator.v_formation_target_positions(self.referans_noktasi,
                                                                                           len(self.ayrik_aktif_iha_idler),
                                                                                           int(self.gorev[1]),
                                                                                           int(self.gorev[2]))
             else:
-                formasyon_hedef_koordinatlar = self.formasyon.getV_FormasyonHedefKonumlar(self.referans_noktasi,
+                formasyon_hedef_koordinatlar = formation_calculator.v_formation_target_positions(self.referans_noktasi,
                                                                                           len(self.aktif_iha_idler),
                                                                                           int(self.gorev[1]),
                                                                                           int(self.gorev[2]))
         elif self.gorev[0] == 'crescent_formation':
             if self.suru_ayriklik:
                 self.referans_noktasi = self.referans_noktasi_ayriklik
-                formasyon_hedef_koordinatlar = self.formasyon.getHilalFormasyonHedefKonumlar(self.referans_noktasi,
+                formasyon_hedef_koordinatlar = formation_calculator.crescent_formation_target_positions(self.referans_noktasi,
                                                                                              len(self.ayrik_aktif_iha_idler),
                                                                                              int(self.gorev[1]))
             else:
-                formasyon_hedef_koordinatlar = self.formasyon.getHilalFormasyonHedefKonumlar(self.referans_noktasi,
+                formasyon_hedef_koordinatlar = formation_calculator.crescent_formation_target_positions(self.referans_noktasi,
                                                                                              len(self.aktif_iha_idler),
                                                                                              int(self.gorev[1]))
         elif self.gorev[0] == 'star_formation':
             if self.suru_ayriklik:
                 self.referans_noktasi = self.referans_noktasi_ayriklik
-                formasyon_hedef_koordinatlar = self.formasyon.getYildizFormasyonHedefKonumlar(self.referans_noktasi,
+                formasyon_hedef_koordinatlar = formation_calculator.star_formation_target_positions(self.referans_noktasi,
                                                                                               len(
                                                                                                   self.ayrik_aktif_iha_idler),
                                                                                               int(self.gorev[1]))
             else:
-                formasyon_hedef_koordinatlar = self.formasyon.getYildizFormasyonHedefKonumlar(self.referans_noktasi,
+                formasyon_hedef_koordinatlar = formation_calculator.star_formation_target_positions(self.referans_noktasi,
                                                                                               len(self.aktif_iha_idler),
                                                                                               int(self.gorev[1]))
         elif self.gorev[0] == 'circle_formation':
             if self.suru_ayriklik:
                 self.referans_noktasi = self.referans_noktasi_ayriklik
-                formasyon_hedef_koordinatlar = self.formasyon.getCemberFormasyonHedefKonumlar(self.referans_noktasi,
+                formasyon_hedef_koordinatlar = formation_calculator.circle_formation_target_positions(self.referans_noktasi,
                                                                                               len(
                                                                                                   self.ayrik_aktif_iha_idler),
                                                                                               int(self.gorev[1]))
             else:
-                formasyon_hedef_koordinatlar = self.formasyon.getCemberFormasyonHedefKonumlar(self.referans_noktasi,
+                formasyon_hedef_koordinatlar = formation_calculator.circle_formation_target_positions(self.referans_noktasi,
                                                                                               len(self.aktif_iha_idler),
                                                                                               int(self.gorev[1]))
         elif self.gorev[0] == 'saved_formation':
