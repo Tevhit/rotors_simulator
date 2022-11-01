@@ -36,8 +36,6 @@ class UAV(threading.Thread):
         self.gorev = None
         self.irtifa = 0
 
-        self.ayriklikVerileriniGuncelle()
-
         self.konum_eslestirme = KonumEslestirme()
 
         self.rastgele_formasyon_envanter_konumlar = []
@@ -45,11 +43,6 @@ class UAV(threading.Thread):
         self.referans_noktasi = [0, 0]
 
         self.bitirme_thread = False
-
-        self.suru_ayriklik = False
-        self.ayrik_aktif_ihalar = []
-        self.referans_noktasi_ayriklik = [-1, -1]
-        self.ayrik_aktif_iha_idler = None
 
     # Rastgele formasyon konumlarini envanterde saklamak icin
     def setRastgeleFormasyonEnvanterKonumlar(self, rastgele_formasyon_envanter_konumlar):
@@ -91,31 +84,6 @@ class UAV(threading.Thread):
         # self.iha_hareket.setPoseY(self.my_pose_y)
         # self.iha_hareket.setPoseZ(self.my_pose_z)
 
-    def ayriklikVerileriniGuncelle(self):
-
-        if self.killed:
-            self.killIha()
-            return
-
-        topic_name = "/ayriklik"
-        rospy.Subscriber(topic_name, String, self.callbackSuruAyriklik)
-
-    def callbackSuruAyriklik(self, data):
-
-        veriler = str(data).split()
-        ayriklik = veriler[1]
-        ayriklik = ayriklik[1:]
-        ayriklik = ayriklik[:-1]
-
-        if ayriklik == 'separate_two_swarm':
-            self.suru_ayriklik = True
-            return
-        if ayriklik == 'join_two_swarm':
-            self.suru_ayriklik = False
-            self.referans_noktasi_ayriklik = [-1, -1]
-            self.ayrik_aktif_ihalar = []
-            self.setReferansNoktasi()
-            return
 
     """
    -------------------------------------------------------------------------------------------------------
@@ -129,7 +97,7 @@ class UAV(threading.Thread):
             self.killIha()
             return
 
-        topic_name = "/gorev"
+        topic_name = "/mission"
         rospy.Subscriber(topic_name, String, self.callbackGorevVerileri)
 
     def callbackGorevVerileri(self, data):
@@ -166,141 +134,40 @@ class UAV(threading.Thread):
             self.killIha()
             return
 
-        if self.suru_ayriklik:
-            if self.referans_noktasi_ayriklik[0] == -1:
-                self.referans_noktasi_ayriklik[0] = self.referans_noktasi[0]
-                self.referans_noktasi_ayriklik[1] = self.referans_noktasi[1]
-                s1 = []
-                s2 = []
-                for i in range(0, len(self.aktif_ihalar)):
-                    if self.aktif_ihalar[i].pose_x < self.referans_noktasi_ayriklik[0]:
-                        s1.append(self.aktif_ihalar[i])
-                    else:
-                        s2.append(self.aktif_ihalar[i])
-                fark = abs(len(s1) - len(s2))
-                if fark > 0:
-                    if len(s1) > len(s2):
-                        p = len(s1)
-                        for i in range(0, int(fark / 2)):
-                            s2.append(s1[p - 1])
-                            p -= 1
-                            s1.pop(len(s1) - 1)
-                    elif len(s1) < len(s2):
-                        p = len(s2)
-                        for i in range(0, int(fark / 2)):
-                            s1.append(s2[p - 1])
-                            p -= 1
-                            s2.pop(len(s2) - 1)
-
-                varmi = 0
-                for i in range(0, len(s1)):
-                    if s1[i].uav_id == self.uav_id:
-                        varmi = 1
-                for i in range(0, len(s2)):
-                    if s2[i].uav_id == self.uav_id:
-                        varmi = 2
-
-                s3 = []
-                if varmi == 1:
-                    s3 = s1
-                    self.referans_noktasi_ayriklik[0] = self.referans_noktasi_ayriklik[0] - 5
-                elif varmi == 2:
-                    s3 = s2
-                    self.referans_noktasi_ayriklik[0] = self.referans_noktasi_ayriklik[0] + 5
-
-                aktif_id_idler = []
-                for i in range(0, len(s3)):
-                    aktif_id_idler.append(s3[i].uav_id)
-
-                self.ayrik_aktif_iha_idler = aktif_id_idler
-
-                self.ayrik_aktif_ihalar = []
-                for i in range(0, len(self.aktif_ihalar)):
-                    if self.aktif_ihalar[i].iha_id in self.ayrik_aktif_iha_idler:
-                        self.ayrik_aktif_ihalar.append(self.aktif_ihalar[i])
-
         formasyon_hedef_koordinatlar = []
 
         if self.gorev[0] == 'square_formation':
-            if self.suru_ayriklik:
-                self.referans_noktasi = self.referans_noktasi_ayriklik
-                formasyon_hedef_koordinatlar = formation_calculator.square_formation_target_positions(self.referans_noktasi,
-                                                                                            len(self.ayrik_aktif_iha_idler),
-                                                                                            int(self.gorev[1]))
-            else:
-                formasyon_hedef_koordinatlar = formation_calculator.square_formation_target_positions(self.referans_noktasi,
-                                                                                            len(self.aktif_iha_idler),
-                                                                                            int(self.gorev[1]))
-            # self.guncelleMyPose()
-            # self.iha_hareket.setTargetPoseX(6)
-            # self.iha_hareket.setTargetPoseY(8)
-            # self.iha_hareket.setTargetPoseZ(2)
-            # self.iha_hareket.hedefKonumaGit()
-            # return
+            formasyon_hedef_koordinatlar = formation_calculator.square_formation_target_positions(self.referans_noktasi,
+                                                                                                  len(self.aktif_iha_idler),
+                                                                                                  int(self.gorev[1]))
         elif self.gorev[0] == 'triangle_formation':
-            if self.suru_ayriklik:
-                self.referans_noktasi = self.referans_noktasi_ayriklik
-                formasyon_hedef_koordinatlar = formation_calculator.triangle_formation_target_positions(self.referans_noktasi,
-                                                                                             len(self.ayrik_aktif_iha_idler),
-                                                                                             int(self.gorev[1]))
-            else:
-                formasyon_hedef_koordinatlar = formation_calculator.triangle_formation_target_positions(self.referans_noktasi,
-                                                                                             len(self.aktif_iha_idler),
-                                                                                             int(self.gorev[1]))
+            formasyon_hedef_koordinatlar = formation_calculator.triangle_formation_target_positions(
+                self.referans_noktasi,
+                len(self.aktif_iha_idler),
+                int(self.gorev[1]))
         elif self.gorev[0] == 'pentagon_formation':
-            if self.suru_ayriklik:
-                self.referans_noktasi = self.referans_noktasi_ayriklik
-                formasyon_hedef_koordinatlar = formation_calculator.pentagon_formation_target_positions(self.referans_noktasi,
-                                                                                              len(self.ayrik_aktif_iha_idler),
-                                                                                              int(self.gorev[1]))
-            else:
-                formasyon_hedef_koordinatlar = formation_calculator.pentagon_formation_target_positions(self.referans_noktasi,
-                                                                                              len(self.aktif_iha_idler),
-                                                                                              int(self.gorev[1]))
+            formasyon_hedef_koordinatlar = formation_calculator.pentagon_formation_target_positions(
+                self.referans_noktasi,
+                len(self.aktif_iha_idler),
+                int(self.gorev[1]))
         elif self.gorev[0] == 'v_formation':
-            if self.suru_ayriklik:
-                self.referans_noktasi = self.referans_noktasi_ayriklik
-                formasyon_hedef_koordinatlar = formation_calculator.v_formation_target_positions(self.referans_noktasi,
-                                                                                          len(self.ayrik_aktif_iha_idler),
-                                                                                          int(self.gorev[1]),
-                                                                                          int(self.gorev[2]))
-            else:
-                formasyon_hedef_koordinatlar = formation_calculator.v_formation_target_positions(self.referans_noktasi,
-                                                                                          len(self.aktif_iha_idler),
-                                                                                          int(self.gorev[1]),
-                                                                                          int(self.gorev[2]))
-        elif self.gorev[0] == 'crescent_formation':
-            if self.suru_ayriklik:
-                self.referans_noktasi = self.referans_noktasi_ayriklik
-                formasyon_hedef_koordinatlar = formation_calculator.crescent_formation_target_positions(self.referans_noktasi,
-                                                                                             len(self.ayrik_aktif_iha_idler),
-                                                                                             int(self.gorev[1]))
-            else:
-                formasyon_hedef_koordinatlar = formation_calculator.crescent_formation_target_positions(self.referans_noktasi,
+            formasyon_hedef_koordinatlar = formation_calculator.v_formation_target_positions(self.referans_noktasi,
                                                                                              len(self.aktif_iha_idler),
-                                                                                             int(self.gorev[1]))
+                                                                                             int(self.gorev[1]),
+                                                                                             int(self.gorev[2]))
+        elif self.gorev[0] == 'crescent_formation':
+            formasyon_hedef_koordinatlar = formation_calculator.crescent_formation_target_positions(
+                self.referans_noktasi,
+                len(self.aktif_iha_idler),
+                int(self.gorev[1]))
         elif self.gorev[0] == 'star_formation':
-            if self.suru_ayriklik:
-                self.referans_noktasi = self.referans_noktasi_ayriklik
-                formasyon_hedef_koordinatlar = formation_calculator.star_formation_target_positions(self.referans_noktasi,
-                                                                                              len(
-                                                                                                  self.ayrik_aktif_iha_idler),
-                                                                                              int(self.gorev[1]))
-            else:
-                formasyon_hedef_koordinatlar = formation_calculator.star_formation_target_positions(self.referans_noktasi,
-                                                                                              len(self.aktif_iha_idler),
-                                                                                              int(self.gorev[1]))
+            formasyon_hedef_koordinatlar = formation_calculator.star_formation_target_positions(self.referans_noktasi,
+                                                                                                len(self.aktif_iha_idler),
+                                                                                                int(self.gorev[1]))
         elif self.gorev[0] == 'circle_formation':
-            if self.suru_ayriklik:
-                self.referans_noktasi = self.referans_noktasi_ayriklik
-                formasyon_hedef_koordinatlar = formation_calculator.circle_formation_target_positions(self.referans_noktasi,
-                                                                                              len(
-                                                                                                  self.ayrik_aktif_iha_idler),
-                                                                                              int(self.gorev[1]))
-            else:
-                formasyon_hedef_koordinatlar = formation_calculator.circle_formation_target_positions(self.referans_noktasi,
-                                                                                              len(self.aktif_iha_idler),
-                                                                                              int(self.gorev[1]))
+            formasyon_hedef_koordinatlar = formation_calculator.circle_formation_target_positions(self.referans_noktasi,
+                                                                                                  len(self.aktif_iha_idler),
+                                                                                                  int(self.gorev[1]))
         elif self.gorev[0] == 'saved_formation':
             formasyon_hedef_koordinatlar = self.rastgele_formasyon_envanter_konumlar
         elif self.gorev[0] == 'sequential_landing':
@@ -315,10 +182,7 @@ class UAV(threading.Thread):
         for i in range(0, len(formasyon_hedef_koordinatlar)):
             my_arr.append([[str(i)], formasyon_hedef_koordinatlar[i]])
 
-        if not self.suru_ayriklik:
-            eslestirilmis_iha_hedef = self.konum_eslestirme.getBipartiteMatchingResult(self.aktif_ihalar, my_arr)
-        else:
-            eslestirilmis_iha_hedef = self.konum_eslestirme.getBipartiteMatchingResult(self.ayrik_aktif_ihalar, my_arr)
+        eslestirilmis_iha_hedef = self.konum_eslestirme.getBipartiteMatchingResult(self.aktif_ihalar, my_arr)
 
         a = 0
         for key in eslestirilmis_iha_hedef.keys():

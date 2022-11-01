@@ -40,8 +40,6 @@ class Main:
         self.saved_formation_button = None
         self.save_random_formation_button = None
         self.set_altitude_button = None
-        self.separate_two_swarm_button = None
-        self.join_two_swarm_button = None
         self.sequential_landing_button = None
         # -------------------------------------------------------------------
         self.set_altitude_window = None
@@ -75,10 +73,6 @@ class Main:
         # -------------------------------------------------------------------
         self.sequential_landing_window = None
         self.sequential_landing_entry = None
-        # -------------------------------------------------------------------
-        self.separate_two_swarm_window = None
-        # -------------------------------------------------------------------
-        self.join_two_swarm_window = None
         # -------------------------------------------------------------------
 
         # UAV count can be parametric according to the "tevhit_swarm_example.launch" file
@@ -158,14 +152,6 @@ class Main:
         self.set_altitude_button = Button(self.window, text='Set Altitude', height=2, width=25,
                                           command=self.set_altitude)
         self.set_altitude_button.place(x=510, y=25)
-
-        self.separate_two_swarm_button = Button(self.window, text='Separate two Swarm', height=2, width=25,
-                                                command=self.separate_two_swarm)
-        self.separate_two_swarm_button.place(x=510, y=75)
-
-        self.join_two_swarm_button = Button(self.window, text='Join two Swarm', height=2, width=25,
-                                            command=self.join_two_swarm)
-        self.join_two_swarm_button.place(x=510, y=125)
 
         self.sequential_landing_button = Button(self.window, text='Sequential Landing (Finish it)', height=2, width=25,
                                                 command=self.sequential_landing)
@@ -426,7 +412,7 @@ class Main:
         self.save_random_formation_window.mainloop()
 
     def publish_save_random_formation(self):
-        self.simulation_manager.rastgeleFormasyonuEnvantereKaydet()
+        self.simulation_manager.publish_mission("save_random_formation")
         self.save_random_formation_window.destroy()
 
     def sequential_landing(self):
@@ -451,44 +437,6 @@ class Main:
         waiting_time = int(self.sequential_landing_entry.get())
         self.simulation_manager.publish_mission('sequential_landing', str(waiting_time))
         self.sequential_landing_window.destroy()
-
-    def separate_two_swarm(self):
-        self.separate_two_swarm_window = Tk()
-        self.separate_two_swarm_window.title('Separate two Swarm')
-        self.separate_two_swarm_window.geometry('350x125')
-        center(self.separate_two_swarm_window)
-
-        separate_two_swarm_question_label = Label(self.separate_two_swarm_window, text="Separate two Swarm?")
-        separate_two_swarm_question_label.place(x=25, y=25)
-
-        separate_two_swarm_okay_button = Button(self.separate_two_swarm_window, text='Okay',
-                                                command=self.publish_separate_two_swarm)
-        separate_two_swarm_okay_button.place(x=150, y=75)
-
-        self.separate_two_swarm_window.mainloop()
-
-    def publish_separate_two_swarm(self):
-        self.simulation_manager.suruAyriklikYayinla('separate_two_swarm')
-        self.separate_two_swarm_window.destroy()
-
-    def join_two_swarm(self):
-        self.join_two_swarm_window = Tk()
-        self.join_two_swarm_window.title('Join two Swarm')
-        self.join_two_swarm_window.geometry('350x125')
-        center(self.join_two_swarm_window)
-
-        join_two_swarm_question_label = Label(self.join_two_swarm_window, text="Join two Swarm?")
-        join_two_swarm_question_label.place(x=25, y=25)
-
-        join_two_swarm_okay_button = Button(self.join_two_swarm_window, text='Okay',
-                                            command=self.publish_join_two_swarm)
-        join_two_swarm_okay_button.place(x=150, y=75)
-
-        self.join_two_swarm_window.mainloop()
-
-    def publish_join_two_swarm(self):
-        self.simulation_manager.suruAyriklikYayinla('join_two_swarm')
-        self.join_two_swarm_window.destroy()
 
 
 main = Main()

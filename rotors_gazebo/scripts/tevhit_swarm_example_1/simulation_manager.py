@@ -29,34 +29,25 @@ class SimulationManager:
         iha_konum_dinleme = threading.Thread(target=self.tumIHAlarinKonumVerileriniDinle)
         iha_konum_dinleme.start()
 
-        self.gorev_yayinlama_reset = False
-
         self.mission_altitude = 0
 
-        self.rastgele_formasyon_envanter_konumlar = []
+        self.mission_name = ""
+        self.mission_params = ""
+        self.publish_mission_thread = None
+        self.publish_mission_thread = threading.Thread(target=self.mission_publisher, )
+        self.publish_mission_thread.start()
 
-    def arm_uav(self, iha_isimleri):
+    def arm_uav(self, uav_names):
 
         iha_idleri = []
-        for i in range(0, len(iha_isimleri)):
-            iha_id = int(iha_isimleri[i].replace('firefly', ''))
+        for i in range(0, len(uav_names)):
+            iha_id = int(uav_names[i].replace('firefly', ''))
             iha_idleri.append(iha_id)
             self.aktif_iha_idler.append(iha_id)
 
-        threads = []
         for i in range(0, len(iha_idleri)):
             my_thread = UAV(iha_idleri[i], self.aktif_iha_idler)
-            threads.append(my_thread)
-            self.threads.append(my_thread)
-
-        for i in range(0, len(threads)):
-            threads[i].start()
-
-        for i in range(0, len(self.threads)):
-            self.threads[i].set_aktif_iha_idler(self.aktif_iha_idler)
-            self.threads[i].setAktifIhalar(self.getAktifIhalar())
-            self.threads[i].setRastgeleFormasyonEnvanterKonumlar(self.rastgele_formasyon_envanter_konumlar)
-            self.threads[i].setReferansNoktasi()
+            my_thread.start()
 
     def disarm_uav(self, iha_id):
 
@@ -79,30 +70,13 @@ class SimulationManager:
                 aktif_ihalar.append(self.tum_ihalar_konumlar[i])
 
         return aktif_ihalar
-    """
-    -------------------------------------------------------------------------------------------------------
-    -------------------------------------------------------------------------------------------------------
-    """
-
-    def rastgeleFormasyonuEnvantereKaydet(self):
-
-        tum_iha_konumlar = []
-
-        for i in range(0, len(self.tum_ihalar_konumlar)):
-            iha_konum = [self.tum_ihalar_konumlar[i].pose_x, self.tum_ihalar_konumlar[i].pose_y]
-            tum_iha_konumlar.append(iha_konum)
-
-        for i in range(0, len(self.threads)):
-            self.threads[i].setRastgeleFormasyonEnvanterKonumlar(tum_iha_konumlar)
-
-        self.rastgele_formasyon_envanter_konumlar = tum_iha_konumlar
-
 
     """
     -------------------------------------------------------------------------------------------------------
     -------------------------------------------------------------------------------------------------------
     BU KISIMDA BUTUN IHA'LARIN KONUMLARI ANLIK OLARAK DINLENEREK THREAD'LERE ILETILIR
     """
+
     def tumIHAlarinKonumVerileriniDinle(self):
         for i in range(1, self.total_uav_count + 1):
             self.listener(i)
@@ -128,57 +102,16 @@ class SimulationManager:
 
         for i in range(0, len(self.threads)):
             self.threads[i].setAktifIhalar(self.getAktifIhalar())
-    """
-    -------------------------------------------------------------------------------------------------------
-    -------------------------------------------------------------------------------------------------------
-    """
 
-    """
-    -------------------------------------------------------------------------------------------------------
-    -------------------------------------------------------------------------------------------------------
-    BU KISIMDA ARAYUZDEN ALINAN GOREVLER ROS ORTAMINA PUBLISH EDILIR
-    """
-    def publish_mission(self, gorev_adi, gorev_parametreleri = ''):
-        self.setGorevYayinlamaReset()
+    def publish_mission(self, mission_name, mission_params=''):
+        self.mission_name = mission_name
+        self.mission_params = mission_params
 
-        self.pub_thread = threading.Thread(target=self.myThreadGorevPub, args=(gorev_adi,gorev_parametreleri,))
-        self.pub_thread.start()
-
-    def myThreadGorevPub(self, gorev_adi, gorev_parametreleri):
-
-        self.gorev_yayinlama_reset = False
-        pub = rospy.Publisher('gorev', String, queue_size=10)
+    def mission_publisher(self):
+        pub = rospy.Publisher('mission', String, queue_size=10)
         rate = rospy.Rate(10)
-        while (not rospy.is_shutdown()):
-            if self.gorev_yayinlama_reset:
-                break
-            pub.publish(str(gorev_adi) + ' ' + gorev_parametreleri + ' ' + str(self.mission_altitude))
+        while not rospy.is_shutdown():
+            pub.publish(self.mission_name + ' ' + self.mission_params + ' ' + str(self.mission_altitude))
             rate.sleep()
 
-    def setGorevYayinlamaReset(self):
-        self.gorev_yayinlama_reset = True
-        try:
-            self.pub_thread.join()
-        except:
-            pass
-    """
-    -------------------------------------------------------------------------------------------------------
-    -------------------------------------------------------------------------------------------------------
-    """
-
-    def suruAyriklikYayinla(self, gorev_adi):
-        self.setGorevYayinlamaReset()
-        gorev_parametreleri = ''
-        self.pub_thread = threading.Thread(target=self.myThreadSuruAyriklikPub, args=(gorev_adi,gorev_parametreleri,))
-        self.pub_thread.start()
-
-    def myThreadSuruAyriklikPub(self, gorev_adi, gorev_parametreleri):
-
-        self.gorev_yayinlama_reset = False
-        pub = rospy.Publisher('ayriklik', String, queue_size=10)
-        rate = rospy.Rate(10)
-        while (not rospy.is_shutdown()):
-            if self.gorev_yayinlama_reset:
-                break
-            pub.publish(gorev_adi)
-            rate.sleep()
+        self.publish_mission_thread.join()
