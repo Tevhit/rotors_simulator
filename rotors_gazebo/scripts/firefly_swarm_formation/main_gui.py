@@ -167,7 +167,7 @@ class Main:
         name_of_uav_list = []
         for iha in selected_uav_list:
             self.uav_list.itemconfig(iha, {'bg': 'lightgreen'})
-            name_of_uav_list.append(self.uav_list.get(iha))
+            name_of_uav_list.append(int(self.uav_list.get(iha).replace('firefly', '')))
 
         self.simulation_manager.arm_uav(name_of_uav_list)
 
@@ -206,7 +206,7 @@ class Main:
     def publish_swarm_altitude(self):
         input_altitude = int(self.set_altitude_entry.get())
         self.simulation_manager.publish_mission('set_altitude', str(input_altitude))
-        self.simulation_manager.mission_altitude = input_altitude
+        self.simulation_manager.set_mission_altitude(input_altitude)
         self.set_altitude_window.destroy()
 
     def square_formation(self):
