@@ -1,7 +1,7 @@
 from tkinter import *
 from simulation_manager import SimulationManager
 
-
+# Tevhit Karsli
 def center(win):
     """
     centers a tkinter window
