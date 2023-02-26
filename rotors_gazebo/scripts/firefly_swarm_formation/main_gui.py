@@ -1,7 +1,8 @@
 from tkinter import *
+
 from simulation_manager import SimulationManager
 
-# Tevhit Karsli
+
 def center(win):
     """
     centers a tkinter window
@@ -40,6 +41,8 @@ class Main:
         self.saved_formation_button = None
         self.save_random_formation_button = None
         self.set_altitude_button = None
+        self.separate_two_swarm_button = None
+        self.join_two_swarm_button = None
         self.sequential_landing_button = None
         # -------------------------------------------------------------------
         self.set_altitude_window = None
@@ -74,14 +77,18 @@ class Main:
         self.sequential_landing_window = None
         self.sequential_landing_entry = None
         # -------------------------------------------------------------------
+        self.separate_two_swarm_window = None
+        # -------------------------------------------------------------------
+        self.join_two_swarm_window = None
+        # -------------------------------------------------------------------
 
         # UAV count can be parametric according to the "tevhit_swarm_example.launch" file
         self.total_uav_count = 12  # sys.argv[1]
         self.simulation_manager = SimulationManager(int(self.total_uav_count))
 
-        # Create and show main window
+        # Create and show the main window
         self.window = Tk()
-        self.window.title("Tevhit Karsli Swarm Simulation")
+        self.window.title("Tevhit Karsli Swarm Formation Simulation")
         self.window.geometry('775x600')
         self.window.eval('tk::PlaceWindow . center')
         center(self.window)
@@ -94,8 +101,8 @@ class Main:
         self.uav_list.place(x=25, y=25)
 
         for i in range(1, int(self.total_uav_count) + 1):
-            iha_name = 'firefly' + str(i)
-            self.uav_list.insert(1, iha_name)
+            uav_name = 'firefly' + str(i)
+            self.uav_list.insert(1, uav_name)
 
         # Each UAV can be armed and disarmed
         self.uav_arm_button = Button(self.window, text='Arm UAV', height=2, width=20,
@@ -153,36 +160,44 @@ class Main:
                                           command=self.set_altitude)
         self.set_altitude_button.place(x=510, y=25)
 
+        self.separate_two_swarm_button = Button(self.window, text='Separate two Swarm', height=2, width=25,
+                                                command=self.separate_two_swarm)
+        self.separate_two_swarm_button.place(x=510, y=75)
+
+        self.join_two_swarm_button = Button(self.window, text='Join two Swarm', height=2, width=25,
+                                            command=self.join_two_swarm)
+        self.join_two_swarm_button.place(x=510, y=125)
+
         self.sequential_landing_button = Button(self.window, text='Sequential Landing (Finish it)', height=2, width=25,
                                                 command=self.sequential_landing)
         self.sequential_landing_button.place(x=510, y=175)
 
     def arm_auv(self):
-        # Start the threads of the selected UAVs in the list
+        # Start the thread(s) of the armed UAV(s) in the list
 
         selected_uav_list = self.uav_list.curselection()
         self.active_uav_count += len(selected_uav_list)
         self.active_uav_info.set('Total Armed UAV Count: ' + str(self.active_uav_count))
 
         name_of_uav_list = []
-        for iha in selected_uav_list:
-            self.uav_list.itemconfig(iha, {'bg': 'lightgreen'})
-            name_of_uav_list.append(int(self.uav_list.get(iha).replace('firefly', '')))
+        for uav in selected_uav_list:
+            self.uav_list.itemconfig(uav, {'bg': 'lightgreen'})
+            name_of_uav_list.append(self.uav_list.get(uav))
 
         self.simulation_manager.arm_uav(name_of_uav_list)
 
         self.uav_list.selection_clear(0, 'end')
 
     def disarm_uav(self):
-        # Stop the threads of the selected UAVs in the list
+        # Stop the thread(s) of the selected UAV(s) in the list
 
         selected_uav_list = self.uav_list.curselection()
         self.active_uav_count -= len(selected_uav_list)
         self.active_uav_info.set('Total Armed UAV Count: ' + str(self.active_uav_count))
 
-        for iha in selected_uav_list:
-            self.uav_list.itemconfig(iha, {'bg': 'white'})
-            self.simulation_manager.disarm_uav(int(self.uav_list.get(iha).replace('firefly', '')))
+        for uav in selected_uav_list:
+            self.uav_list.itemconfig(uav, {'bg': 'white'})
+            self.simulation_manager.disarm_uav(int(self.uav_list.get(uav).replace('firefly', '')))
 
         self.uav_list.selection_clear(0, 'end')
 
@@ -206,7 +221,7 @@ class Main:
     def publish_swarm_altitude(self):
         input_altitude = int(self.set_altitude_entry.get())
         self.simulation_manager.publish_mission('set_altitude', str(input_altitude))
-        self.simulation_manager.set_mission_altitude(input_altitude)
+        self.simulation_manager.mission_altitude = input_altitude
         self.set_altitude_window.destroy()
 
     def square_formation(self):
@@ -412,7 +427,7 @@ class Main:
         self.save_random_formation_window.mainloop()
 
     def publish_save_random_formation(self):
-        self.simulation_manager.publish_mission("save_random_formation")
+        self.simulation_manager.rastgeleFormasyonuEnvantereKaydet()
         self.save_random_formation_window.destroy()
 
     def sequential_landing(self):
@@ -437,6 +452,44 @@ class Main:
         waiting_time = int(self.sequential_landing_entry.get())
         self.simulation_manager.publish_mission('sequential_landing', str(waiting_time))
         self.sequential_landing_window.destroy()
+
+    def separate_two_swarm(self):
+        self.separate_two_swarm_window = Tk()
+        self.separate_two_swarm_window.title('Separate two Swarm')
+        self.separate_two_swarm_window.geometry('350x125')
+        center(self.separate_two_swarm_window)
+
+        separate_two_swarm_question_label = Label(self.separate_two_swarm_window, text="Separate two Swarm?")
+        separate_two_swarm_question_label.place(x=25, y=25)
+
+        separate_two_swarm_okay_button = Button(self.separate_two_swarm_window, text='Okay',
+                                                command=self.publish_separate_two_swarm)
+        separate_two_swarm_okay_button.place(x=150, y=75)
+
+        self.separate_two_swarm_window.mainloop()
+
+    def publish_separate_two_swarm(self):
+        self.simulation_manager.suruAyriklikYayinla('separate_two_swarm')
+        self.separate_two_swarm_window.destroy()
+
+    def join_two_swarm(self):
+        self.join_two_swarm_window = Tk()
+        self.join_two_swarm_window.title('Join two Swarm')
+        self.join_two_swarm_window.geometry('350x125')
+        center(self.join_two_swarm_window)
+
+        join_two_swarm_question_label = Label(self.join_two_swarm_window, text="Join two Swarm?")
+        join_two_swarm_question_label.place(x=25, y=25)
+
+        join_two_swarm_okay_button = Button(self.join_two_swarm_window, text='Okay',
+                                            command=self.publish_join_two_swarm)
+        join_two_swarm_okay_button.place(x=150, y=75)
+
+        self.join_two_swarm_window.mainloop()
+
+    def publish_join_two_swarm(self):
+        self.simulation_manager.suruAyriklikYayinla('join_two_swarm')
+        self.join_two_swarm_window.destroy()
 
 
 main = Main()
